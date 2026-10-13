@@ -57,6 +57,23 @@ all month.
 Without the `?key=`, the page loads but shows no data, so a stranger who finds the URL can't see
 your calendar. To change the key, edit `DASHBOARD_KEY` in Render and update the frame's URL.
 
+## Or host it on Replit
+
+`.replit` is set up for this repo.
+
+1. In Replit: **Create Repl → Import from GitHub** and pick this repo. Use the branch these
+   changes are on, or merge them into `main` first.
+2. Open **Secrets** (the lock icon) and add:
+   - `GCAL_FAMILY_ICS`: your Google Calendar secret iCal address
+   - `DASHBOARD_KEY`: any long random string (it acts as the dashboard's password)
+3. Press **Run** to try it in the Replit preview. Then click **Deploy**, choose **Reserved VM**
+   (the smallest size is plenty), and make sure the secrets are included in the deployment.
+4. Your dashboard URL is `https://<your-app>.replit.app/?key=<DASHBOARD_KEY>`.
+
+Deployments may cost extra beyond your Replit plan's included credits, so check the price Replit
+shows before you confirm. When you change `config.json` or the code, push to GitHub, pull in
+Replit's Git pane, and redeploy.
+
 ## Run it locally
 
 Needs Node.js 18 or newer.

@@ -1,0 +1,14 @@
+# Replit config: Create Repl -> Import from GitHub -> this repo, then Deploy.
+modules = ["nodejs-22"]
+run = "npm install && npm start"
+
+[deployment]
+build = ["npm", "ci", "--omit=dev"]
+run = ["npm", "start"]
+# "gce" is a Reserved VM: always on, fixed monthly price. The frame polls every 30 seconds,
+# so Autoscale ("cloudrun") would rarely scale down and wouldn't save much.
+deploymentTarget = "gce"
+
+[[ports]]
+localPort = 8080
+externalPort = 80
