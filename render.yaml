@@ -1,0 +1,18 @@
+# Render Blueprint: Render dashboard -> New -> Blueprint -> pick this repo.
+# It asks for the values marked sync: false, and generates DASHBOARD_KEY for you.
+services:
+  - type: web
+    name: frame-dashboard
+    runtime: node
+    plan: free
+    buildCommand: npm ci --omit=dev
+    startCommand: npm start
+    healthCheckPath: /healthz
+    autoDeploy: true
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: DASHBOARD_KEY
+        generateValue: true
+      - key: GCAL_FAMILY_ICS
+        sync: false

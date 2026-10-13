@@ -14,42 +14,62 @@ There are two halves:
 
 1. **Rooting the frame** so it runs your page instead of the AiMOR app. This happens at a computer
    with the frame plugged in over USB. See **[docs/ROOTING-PF1007.md](docs/ROOTING-PF1007.md)**.
-2. **This server**, which runs on an always-on machine on your home network (a Raspberry Pi, a
-   home server or an old laptop). It fetches all the data and serves the page the frame shows.
+2. **This server**, hosted online for free on [Render](https://render.com). It fetches all the data
+   and serves the page the frame shows. No extra hardware at home.
 
-## Why a small home server?
+## Why not run everything on the frame?
 
-The frame runs Android 6 with an old WebView and an old certificate store. Many modern HTTPS
-sites fail on it, including anything with a Let's Encrypt certificate. So the frame talks only
-to this server over plain HTTP on your LAN, and the server does all the modern HTTPS work.
-That also keeps your private Google Calendar link off the frame.
+The frame is Android 6 with no way to run a server, and its browser engine can't fetch MTA
+subway data (a binary format) or your Google Calendar directly. So a small server does the
+fetching and the frame just shows a web page. The server also keeps your private calendar link
+off the frame.
+
+The frame's certificate store dates from 2015 and doesn't trust today's certificate authorities, so it
+rejects most HTTPS sites, Render included. Once the frame is rooted,
+`scripts/install-frame-certs.sh` adds the current Let's Encrypt, Google and SSL.com root
+certificates. Their fingerprints are pinned in `frame-certs/`. See step 5 of the rooting guide.
 
 The page is written in ES5 with flexbox only, so it should render on the stock WebView without the
 WebView upgrade. That's how it was written, not something tested on a real frame yet. If anything
 looks broken on the frame, do the WebView 106 upgrade from the rooting guide.
 
-## Quick start
+## Host it on Render (free)
+
+1. Sign up at [render.com](https://render.com) with your GitHub account.
+2. **New → Blueprint**, then pick this repo. Render reads `render.yaml`.
+3. When it asks for `GCAL_FAMILY_ICS`, paste your Google Calendar secret iCal address (see
+   [Google Calendar](#google-calendar) below).
+4. When the deploy finishes, open the service's **Environment** tab and copy the generated
+   `DASHBOARD_KEY`.
+5. Your dashboard URL is `https://<service-name>.onrender.com/?key=<DASHBOARD_KEY>`. Open it in
+   your computer's browser to check it, then point the frame at it.
+
+Settings live in [`config.json`](config.json), which holds no secrets and is committed. Edit it
+(or ask Claude to) and push, and Render redeploys on its own. Render deploys from the branch you
+pick when you create the Blueprint; merge into `main` and deploy from that.
+
+About Render's free plan (check their current terms): a free service sleeps after about 15 minutes
+with no visitors. The frame checks in every 30 seconds, so it stays awake while the frame is on.
+If the frame has been off, the first load takes up to about a minute while the service wakes up.
+The page keeps retrying, so it fills in on its own. Free instance hours cover one service running
+all month.
+
+Without the `?key=`, the page loads but shows no data, so a stranger who finds the URL can't see
+your calendar. To change the key, edit `DASHBOARD_KEY` in Render and update the frame's URL.
+
+## Run it locally
 
 Needs Node.js 18 or newer.
 
 ```sh
 npm install
 npm run demo          # sample data, nothing to configure: open http://localhost:8080
-```
-
-Then configure it for real:
-
-```sh
-cp config.example.json config.json
-cp .env.example .env
+cp .env.example .env  # then fill in your calendar link
 npm test
 npm start
 ```
 
-`npm start` prints the address to point the frame at, for example `http://192.168.1.20:8080`.
-Give that machine a fixed IP (a DHCP reservation in your router) so the address never changes.
-
-## Configuration (`config.json`)
+## Configuration ([`config.json`](config.json))
 
 ### Weather
 
@@ -111,27 +131,25 @@ That delay is on Google's side, not the dashboard's.
 
 | Setting | Default | |
 | --- | --- | --- |
-| `port` | `8080` | Also `PORT` env var |
+| `port` | `8080` | Also `PORT` env var (Render sets it) |
+| `DASHBOARD_KEY` env var | unset | When set, the data API requires `?key=` in the page URL |
 | `timezone` | `America/New_York` | Used for the clock and calendar, whatever the frame's own clock says |
 | `?nightStart=23&nightEnd=6` | 23 → 6 | URL query: hours when the screen dims |
 
 Data is cached on the server: subway 30 s, Citi Bike 60 s, calendar 5 min, weather 10 min. If a
 source fails, the last good data stays on screen with a note.
 
-## Running it permanently
+## Other ways to host it
 
-**Raspberry Pi / Linux:** `deploy/frame-dashboard.service` is a systemd unit. Edit the paths in it,
-then run `sudo systemctl enable --now frame-dashboard`.
-
-**Docker:**
+Any host that runs Node or Docker works: Fly.io, Railway, Google Cloud Run, or a box at home
+(`deploy/frame-dashboard.service` is a systemd unit). There's a `Dockerfile` too:
 
 ```sh
 docker build -t frame-dashboard .
-docker run -d --restart unless-stopped -p 8080:8080 \
-  -v "$PWD/config.json:/app/config.json:ro" --env-file .env frame-dashboard
+docker run -d --restart unless-stopped -p 8080:8080 --env-file .env frame-dashboard
 ```
 
-**Testing without a server:** with the frame on USB and root ADB working, `adb reverse tcp:8080 tcp:8080`
+**Testing from your laptop:** with the frame on USB and root ADB working, `adb reverse tcp:8080 tcp:8080`
 lets the frame open `http://127.0.0.1:8080/` from your laptop (see the rooting guide).
 
 ## Layout
@@ -141,7 +159,9 @@ server/            Node server (no framework)
   sources/         weather, subway, citibike, calendar
   ics.js           iCalendar parser + recurrence expansion
 public/            The page the frame shows (ES5, flexbox only, for the old WebView)
-scripts/           find-stop / find-station helpers
+scripts/           find-stop / find-station helpers, install-frame-certs.sh
+frame-certs/       Root certificates (and pinned fingerprints) for the frame's trust store
+render.yaml        Render Blueprint
 test/              node --test suites (npm test)
 docs/              Rooting guide for the PF1007
 ```

@@ -1,4 +1,5 @@
 import { createServer } from 'node:http';
+import { timingSafeEqual } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { ROOT } from './config.js';
@@ -47,11 +48,21 @@ export async function dashboardPayload(config, sources) {
   return body;
 }
 
+function keyMatches(given, expected) {
+  const a = Buffer.from(String(given || ''));
+  const b = Buffer.from(expected);
+  return a.length === b.length && timingSafeEqual(a, b);
+}
+
 export function createApp(config, sources = createSources(config)) {
   return createServer(async (req, res) => {
     const url = new URL(req.url, 'http://frame');
     try {
       if (url.pathname === '/api/dashboard') {
+        if (config.accessKey && !keyMatches(url.searchParams.get('key'), config.accessKey)) {
+          res.writeHead(401, { 'content-type': 'application/json' });
+          return res.end(JSON.stringify({ error: 'Wrong or missing ?key= in the dashboard URL' }));
+        }
         const body = JSON.stringify(await dashboardPayload(config, sources));
         res.writeHead(200, { 'content-type': 'application/json', 'cache-control': 'no-store' });
         return res.end(body);

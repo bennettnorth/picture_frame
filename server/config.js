@@ -20,13 +20,12 @@ export function loadConfig(file = process.env.CONFIG || path.join(root, 'config.
   const envFile = path.join(root, '.env');
   if (existsSync(envFile) && typeof process.loadEnvFile === 'function') process.loadEnvFile(envFile);
 
-  if (!existsSync(file)) {
-    console.warn(`[config] ${file} not found, using config.example.json`);
-    file = path.join(root, 'config.example.json');
-  }
+  if (!existsSync(file)) throw new Error(`Config file ${file} not found`);
   const config = resolveEnv(JSON.parse(readFileSync(file, 'utf8')));
   config.port = Number(process.env.PORT || config.port || 8080);
   config.timezone = config.timezone || 'America/New_York';
+  // When set, /api/dashboard requires ?key=<value>, so a public URL doesn't expose your calendar.
+  config.accessKey = process.env.DASHBOARD_KEY || '';
   return config;
 }
 

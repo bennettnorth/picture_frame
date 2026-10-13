@@ -65,3 +65,17 @@ test('server returns per-source data and errors, serves the page, blocks travers
     app.close();
   }
 });
+
+test('access key protects the API but not the page', async () => {
+  const app = createApp({ timezone: 'America/New_York', accessKey: 's3cret' }, { weather: async () => ({ ok: 1 }) });
+  await new Promise((r) => app.listen(0, '127.0.0.1', r));
+  const base = `http://127.0.0.1:${app.address().port}`;
+  try {
+    assert.equal((await fetch(`${base}/api/dashboard`)).status, 401);
+    assert.equal((await fetch(`${base}/api/dashboard?key=wrong`)).status, 401);
+    assert.equal((await fetch(`${base}/api/dashboard?key=s3cret`)).status, 200);
+    assert.equal((await fetch(`${base}/`)).status, 200);
+  } finally {
+    app.close();
+  }
+});

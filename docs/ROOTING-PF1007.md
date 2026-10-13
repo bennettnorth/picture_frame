@@ -104,20 +104,36 @@ adb shell svc power stayon true
 
 The dashboard dims itself at night (11pm to 6am by default), so you don't need a screen-off
 schedule. The frame's Wi-Fi MAC changes at every boot, so you can't give **the frame** a
-reliable DHCP reservation. That only matters for `adb` over Wi-Fi. The dashboard works because
-the frame connects out to **your server**, and the server's IP should be fixed.
+reliable DHCP reservation. That only matters for `adb` over Wi-Fi. The dashboard doesn't care,
+because the frame connects out to the hosted dashboard.
 
-## Step 5: show the dashboard full screen
+## Step 5: trust modern HTTPS certificates
 
-Start this repo's server on your always-on machine (see the [README](../README.md)). Check
-`http://<server-ip>:8080` in a desktop browser first.
+The dashboard is hosted on Render over HTTPS. The frame's 2015 trust store doesn't include the
+certificate authorities Render and most sites use today, so the page would fail to load. With
+root ADB, from this repo on your computer:
+
+```sh
+sh scripts/install-frame-certs.sh          # undo: sh scripts/install-frame-certs.sh --undo
+```
+
+It checks each certificate in `frame-certs/` against pinned SHA-256 fingerprints, copies it into
+`/system/etc/security/cacerts/`, and records what it added so undo removes only those. The
+Let's Encrypt part matches the wesbos BIUFRAME guide. This writes to `/system`, so run it after
+your backup. Power-cycle the frame afterwards.
+
+## Step 6: show the dashboard full screen
+
+Deploy the server first (see [Host it on Render](../README.md#host-it-on-render-free)) and check
+your URL, `https://<name>.onrender.com/?key=<DASHBOARD_KEY>`, in a desktop browser. Below,
+`<dashboard-url>` means that full URL including `?key=`.
 
 **Option A: the wesbos kiosk app (recommended).** It's a small full-screen WebView app that can be
 the Home app, so it starts at boot. Hold two fingers on the screen for 1.5 s to get a menu
 (launcher, Android settings, reload). Build it from their repo with JDK 17 and Android build-tools 34:
 
 1. In `dashboard/kiosk/src/com/wesbos/homehq/MainActivity.java`, change `DEFAULT_URL` to
-   `http://<server-ip>:8080/`.
+   `<dashboard-url>`.
 2. `ANDROID_HOME=/path/to/android-sdk bash dashboard/kiosk/build.sh`
 3. `adb install -r dashboard/kiosk/build/homehq.apk`
 4. Select it as the Home app. The unit has no navigation bar, so also see their kiosk README for the
@@ -126,12 +142,12 @@ the Home app, so it starts at boot. Hold two fingers on the screen for 1.5 s to 
 You can also leave the default URL alone and open any URL:
 
 ```sh
-adb shell 'am start -a android.intent.action.VIEW -d "http://<server-ip>:8080/" -n com.wesbos.homehq/.MainActivity'
+adb shell 'am start -a android.intent.action.VIEW -d "<dashboard-url>" -n com.wesbos.homehq/.MainActivity'
 ```
 
 (Quote the whole command when the URL has `&`.)
 
-**Option B: testing from a laptop, no server yet.** With the frame on USB:
+**Option B: testing from a laptop before deploying.** No certificates needed. With the frame on USB:
 
 ```sh
 npm run demo                         # or npm start
@@ -152,7 +168,7 @@ It replaces files in `/system`, so make a backup first and follow the read-back 
 ## Security once it's done
 
 - `/system/xbin/su` gives root to **any** app without a prompt. Install nothing untrusted.
-- Android 6 and WebView 106 are old. Keep the frame on your home network, pointed only at your own server.
+- Android 6 and WebView 106 are old. Keep the frame on your home network, pointed only at your own dashboard.
 - If you used T3c or Route S, port 5555 may be open root ADB on your network. Read the matching
   section of the wesbos docs on how to close it.
 

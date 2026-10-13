@@ -232,10 +232,12 @@
 
   function poll() {
     var xhr = new XMLHttpRequest();
-    xhr.open('GET', 'api/dashboard?t=' + Date.now());
+    xhr.open('GET', 'api/dashboard?t=' + Date.now() + (params.key ? '&key=' + encodeURIComponent(params.key) : ''));
     xhr.timeout = 20000;
     xhr.onload = function () {
-      if (xhr.status === 200) {
+      if (xhr.status === 401) {
+        set('subway', errorHtml('Dashboard', { error: 'add ?key=YOUR_KEY to the URL' }));
+      } else if (xhr.status === 200) {
         try {
           data = JSON.parse(xhr.responseText);
           clockSkew = data.now - Date.now();
