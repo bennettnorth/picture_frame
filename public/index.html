@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+  <title>Home Dashboard</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="app">
+    <section class="col col-left">
+      <div class="clock">
+        <div id="time" class="time">--:--</div>
+        <div id="date" class="date"></div>
+      </div>
+      <div id="weather" class="panel weather"></div>
+    </section>
+
+    <section class="col col-mid">
+      <div class="panel">
+        <h2>Subway</h2>
+        <div id="subway"></div>
+      </div>
+      <div class="panel">
+        <h2>Citi Bike</h2>
+        <div id="citibike"></div>
+      </div>
+    </section>
+
+    <section class="col col-right">
+      <div class="panel calendar-panel">
+        <h2>Calendar</h2>
+        <div id="calendar"></div>
+      </div>
+    </section>
+  </div>
+  <div id="status" class="status"></div>
+  <script src="app.js"></script>
+</body>
+</html>

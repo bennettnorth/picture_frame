@@ -1,0 +1,33 @@
+{
+  "port": 8080,
+  "timezone": "America/New_York",
+
+  "weather": {
+    "label": "Brooklyn",
+    "latitude": 40.7081,
+    "longitude": -73.9571,
+    "units": "imperial"
+  },
+
+  "subway": {
+    "maxArrivals": 4,
+    "stops": [
+      { "label": "Bedford Av", "direction": "Manhattan", "stopId": "L08N", "routes": ["L"] },
+      { "label": "Bedford Av", "direction": "Canarsie", "stopId": "L08S", "routes": ["L"] },
+      { "label": "Marcy Av", "direction": "Manhattan", "stopId": "M16N", "routes": ["J", "M", "Z"] }
+    ]
+  },
+
+  "citibike": {
+    "stationIds": [],
+    "near": { "latitude": 40.7081, "longitude": -73.9571, "count": 3 }
+  },
+
+  "calendar": {
+    "days": 5,
+    "maxEvents": 14,
+    "calendars": [
+      { "name": "Family", "color": "#4285f4", "url": "$GCAL_FAMILY_ICS" }
+    ]
+  }
+}
